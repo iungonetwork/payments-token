@@ -1,0 +1,25 @@
+{
+  "name": "iungo-bcl",
+  "version": "0.0.1",
+  "description": "IUNGO blockchain link",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "nodemon": "./node_modules/nodemon/bin/nodemon.js -w /app/src /app/src/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqp-connection-manager": "^2.2.0",
+    "amqplib": "^0.5.2",
+    "amqplib-auto-recovery": "^0.2.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "redis": "^2.8.0",
+    "typedarray-to-buffer": "^3.1.5",
+    "web3": "^1.0.0-beta.36"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.4"
+  }
+}
