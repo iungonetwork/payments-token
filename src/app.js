@@ -1,3 +1,7 @@
+/*
+	Token transfer monitor
+*/
+
 const express = require('express'), 
 	  bodyParser = require('body-parser'),
 	  redis = require('redis'),
@@ -21,6 +25,9 @@ const express = require('express'),
 
 app.use(bodyParser.json())
 
+/*
+	Report status
+*/
 app.get('/', async(req, res) => {
 	const status = {
 		running: true,
@@ -29,6 +36,9 @@ app.get('/', async(req, res) => {
 	res.send(status)
 })
 
+/*
+	Show addresses available in pool
+*/
 app.get('/pool/free', (req, res) => {
 	bindings.getFreeAddresses().then(addresses => {
 		res.send(addresses)
@@ -37,6 +47,9 @@ app.get('/pool/free', (req, res) => {
 	}));
 })
 
+/*
+	Add addresses pool
+*/
 app.post('/pool/free', (req, res) => {
 	const address = req.body.address;
 	if (!address) {
@@ -50,6 +63,9 @@ app.post('/pool/free', (req, res) => {
 	})
 })
 
+/*
+	Bind address from pool
+*/
 app.post('/pool/free/bind', (req, res) => {
 	const userId = req.body.userId;
 	if (!userId) {
@@ -63,12 +79,18 @@ app.post('/pool/free/bind', (req, res) => {
 	})
 })
 
+/*
+	Get address-user bindings
+*/
 app.get('/bindings', (req, res) => {
 	bindings.getBindings().then(bindings => {
 		res.send(bindings)
 	})
 })
 
+/*
+	Get user id for given address
+*/
 app.get('/bindings/address/:address', (req, res) => {
 	const address = req.params.address;
 	bindings.findUserForAddress(address).then(userId => {
@@ -80,15 +102,20 @@ app.get('/bindings/address/:address', (req, res) => {
 	})
 })
 
+/*
+	Process transfer
+*/
 monitor.on('transfer', transfer => {
+	// check if receiver address is bound to user, ignore otherwise
 	bindings.findUserForAddress(transfer.to).then(userId => {
 		if (userId) {
 			console.log('Mapped to user:' + userId)
+
+			// push to billing queue
 			const msg = {
 				userId: userId,
 				transfer: transfer
 			}
-
 			chWrapper.sendToQueue(process.env.AMQP_QUEUE, msg, {contentType: 'application/json'}).catch(err => {
 				console.log(err)
 			})

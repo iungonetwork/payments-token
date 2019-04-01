@@ -1,3 +1,9 @@
+/*
+	Token transfer monitor
+
+	Monitors smart contract events and detects token transfers
+*/
+
 const EventEmitter = require('events')
 const Web3 = require("web3")
 
@@ -15,6 +21,9 @@ class TokenTransferMonitor extends EventEmitter {
 		this.web3 = new Web3()
 	}
 
+	/*
+		web3 provider setup to reconnect on close
+	*/
 	connect() {
 		const reconnect = this.connect.bind(this)
 		const provider = new Web3.providers.WebsocketProvider(this.web3Uri)

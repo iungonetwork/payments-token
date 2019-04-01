@@ -1,3 +1,7 @@
+/*
+	DEPRECATED, replaced by AMQP channel wrapper
+*/
+
 const REDIS_BILLING_NOTIFICATION_QUEUE = 'billing:pending'
 
 class BillingNotificationService {

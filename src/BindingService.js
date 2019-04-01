@@ -1,3 +1,8 @@
+/*
+	Address pool manager
+
+	Track use of wallet addresses, manages address bindings to user ids.
+*/
 
 const REDIS_SET_BINDINGS = 'blockchain:bindings',
 	  REDIS_SET_POOL_FREE = 'blockchain:pool:free',
