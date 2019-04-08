@@ -29,7 +29,7 @@ REDIS_HOST: redis
 
 Start the app
 ```
-docker run -t -p8080:80 docker.iungo.network/payments-token
+docker run -p8080:80 docker.iungo.network/payments-token
 ```
 
 Load wallet
