@@ -65,14 +65,6 @@ class TokenTransferMonitor extends EventEmitter {
 
 			this.emit('transfer', transfer)
 		});
-
-		setInterval(this.checkStatus.bind(this), 60000)
-	}
-
-	checkStatus() {
-		this.web3.eth.isSyncing().then(status => {
-			console.log(status)
-		})
 	}
 }
 
