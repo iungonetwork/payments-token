@@ -144,7 +144,7 @@ class BindingService {
 
 	findUserForAddress(address) {
 		return new Promise((resolve, reject) => {
-			this.redis.get(this.addressKey(address.toLowerCase()), (err, userId) => {
+			this.redis.get(this.addressKey(address), (err, userId) => {
 				if (err) {
 					reject(err)
 				} else {
