@@ -2,14 +2,13 @@
 	Token transfer monitor
 */
 
-const express = require('express'), 
+const express = require('express'),
 	  bodyParser = require('body-parser'),
-	  redis = require('redis'),
+	  redis = require('./redis'),
 	  app = express()
  	  port = 80,
- 	  redisClient = redis.createClient({host: process.env.REDIS_HOST}),
  	  BindingService = require('./BindingService'),
- 	  bindings = new BindingService(redisClient),
+ 	  bindings = new BindingService(redis),
 	  TokenTransferMonitor = require('./TokenTransferMonitor'),
 	  token = process.env.TOKEN
 	  contractAddress = process.env.CONTRACT_ADDRESS,
@@ -21,7 +20,8 @@ const express = require('express'),
 	  chWrapper = amqpConnection.createChannel({
  		json: true,
  		setup: channel => channel.assertQueue(process.env.AMQP_QUEUE, {durable: true})
-	  })
+	  }),
+	  LAST_BLOCK_KEY = 'blockchain:last_block'
 
 app.use(bodyParser.json())
 
@@ -105,27 +105,41 @@ app.get('/bindings/address/:address', (req, res) => {
 /*
 	Process transfer
 */
-monitor.on('transfer', transfer => {
-	// check if receiver address is bound to user, ignore otherwise
-	bindings.findUserForAddress(transfer.to).then(userId => {
-		if (userId) {
-			console.log('Mapped to user:' + userId)
+monitor.on('data', data => {
 
-			// push to billing queue
-			const msg = {
-				userId: userId,
-				transfer: transfer
+	data.transfers.forEach(transfer => {
+		// check if receiver address is bound to user, ignore otherwise
+		bindings.findUserForAddress(transfer.to).then(userId => {
+			if (userId) {
+				console.log('Mapped to user:' + userId)
+
+				// push to billing queue
+				const msg = {
+					userId: userId,
+					transfer: transfer
+				}
+				chWrapper.sendToQueue(process.env.AMQP_QUEUE, msg, {contentType: 'application/json'}).catch(err => {
+					console.log(err)
+				})
+			} else {
+				console.log('User not found')
 			}
-			chWrapper.sendToQueue(process.env.AMQP_QUEUE, msg, {contentType: 'application/json'}).catch(err => {
-				console.log(err)
-			})
-		} else {
-			console.log('User not found')
-		}
-	}, reason => {
-		console.log(reason)
+		}, reason => {
+			console.log(reason)
+		})
+	})
+	
+	redis.pset(LAST_BLOCK_KEY, data.endingBlock).then(_ => {
+		console.log(`marked latest processed block: ${data.endingBlock}`)
+	}).catch(e => {
+		console.log(e)
 	})
 })
 
-monitor.start('latest')
+redis.pget(LAST_BLOCK_KEY).then(lastBlock => {
+	monitor.start(lastBlock || process.env.INITIAL_STARTING_BLOCK)
+}).catch(e => {
+	console.log(e)
+})
+
 app.listen(port)
