@@ -8,8 +8,8 @@ const EventEmitter = require('events')
 const Web3 = require("web3")
 
 const TRANSFER_FUNCTION = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-const PROCESS_NEXT_INTERVAL_MS = 10000
-const PROCESS_NEXT_ERROR_INTERVAL_MS = 10000
+const PROCESS_NEXT_INTERVAL_MS = process.env.PROCESS_NEXT_INTERVAL_MS || 60000
+const PROCESS_NEXT_ERROR_INTERVAL_MS = process.env.PROCESS_NEXT_ERROR_INTERVAL_MS || 60000
 
 class TokenTransferMonitor extends EventEmitter {
 
