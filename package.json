@@ -14,6 +14,7 @@
     "amqplib": "^0.5.2",
     "amqplib-auto-recovery": "^0.2.0",
     "body-parser": "^1.18.3",
+    "debug": "^4.1.1",
     "eth-hd-wallet": "^0.4.0",
     "express": "^4.16.4",
     "redis": "^2.8.0",

@@ -9,6 +9,8 @@ const REDIS_SET_BINDINGS = 'blockchain:bindings',
 	  REDIS_SET_POOL_BOUND = 'blockchain:pool:bound',
 	  REDIS_SET_USERS = 'blockchain:users'
 
+const log = require('./log')()
+
 class BindingService {
 
 	constructor(redis) {
@@ -42,7 +44,7 @@ class BindingService {
 	getFreeAddresses() {
 		return new Promise((resolve, reject) => {
 			this.redis.smembers(REDIS_SET_POOL_FREE, (err, addresses) => {
-				console.log(err);
+				log.error(err);
 				if (err) {
 					reject(err)
 				} else {

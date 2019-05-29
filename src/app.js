@@ -7,6 +7,7 @@ const express = require('express'),
 	  redis = require('./redis'),
 	  app = express()
  	  port = 80,
+ 	  log = require('./log')(),
  	  BindingService = require('./BindingService'),
  	  bindings = new BindingService(redis),
 	  TokenTransferMonitor = require('./TokenTransferMonitor'),
@@ -14,7 +15,6 @@ const express = require('express'),
 	  contractAddress = process.env.CONTRACT_ADDRESS,
 	  tokenDecimals = process.env.TOKEN_DECIMALS,
 	  monitor = new TokenTransferMonitor(process.env.WEB3_WS_PROVIDER_URI, contractAddress, token, tokenDecimals),
-	  BillingNotificationService = require('./BillingNotificationService'),
 	  amqp = require('amqp-connection-manager'),
 	  amqpConnection = amqp.connect([process.env.AMQP_URI]),
 	  chWrapper = amqpConnection.createChannel({
@@ -109,9 +109,12 @@ monitor.on('data', data => {
 
 	data.transfers.forEach(transfer => {
 		// check if receiver address is bound to user, ignore otherwise
+
+		log.debug('processing transfer: %o', transfer)
+
 		bindings.findUserForAddress(transfer.to).then(userId => {
 			if (userId) {
-				console.log('Mapped to user:' + userId)
+				log.debug('mapped address %s to user %s', transfer.to, userId)
 
 				// push to billing queue
 				const msg = {
@@ -119,27 +122,27 @@ monitor.on('data', data => {
 					transfer: transfer
 				}
 				chWrapper.sendToQueue(process.env.AMQP_QUEUE, msg, {contentType: 'application/json'}).catch(err => {
-					console.log(err)
+					log.error(err)
 				})
 			} else {
-				console.log('User not found')
+				log.debug('user not found for address %s', transfer.to)
 			}
 		}, reason => {
-			console.log(reason)
+			log.error(reason)
 		})
 	})
 	
 	redis.pset(LAST_BLOCK_KEY, data.endingBlock).then(_ => {
-		console.log(`marked latest processed block: ${data.endingBlock}`)
+		log.debug(`marked latest processed block: ${data.endingBlock}`)
 	}).catch(e => {
-		console.log(e)
+		log.error(e)
 	})
 })
 
 redis.pget(LAST_BLOCK_KEY).then(lastBlock => {
 	monitor.start(lastBlock || process.env.INITIAL_STARTING_BLOCK)
 }).catch(e => {
-	console.log(e)
+	log.error(e)
 })
 
 app.listen(port)

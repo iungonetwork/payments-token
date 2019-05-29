@@ -11,6 +11,8 @@ const TRANSFER_FUNCTION = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f
 const PROCESS_NEXT_INTERVAL_MS = process.env.PROCESS_NEXT_INTERVAL_MS || 60000
 const PROCESS_NEXT_ERROR_INTERVAL_MS = process.env.PROCESS_NEXT_ERROR_INTERVAL_MS || 60000
 
+const log = require('./log')()
+
 class TokenTransferMonitor extends EventEmitter {
 
 	constructor(web3Uri, contractAddress, token, decimals) {
@@ -28,10 +30,10 @@ class TokenTransferMonitor extends EventEmitter {
 	connect() {
 		const reconnect = this.connect.bind(this)
 		const provider = new Web3.providers.WebsocketProvider(this.web3Uri)
-		provider.on('error', e => console.log)
+		provider.on('error', e => log.error)
 		provider.on('end', e => {
-		    console.log('WS closed');
-		    console.log('Will attempt to reconnect in 5 seconds...')
+		    log.error('WS closed');
+		    log.debug('Will attempt to reconnect in 5 seconds...')
 		    setTimeout(reconnect, 5000)
 		})
 		this.web3.setProvider(provider)
@@ -47,14 +49,14 @@ class TokenTransferMonitor extends EventEmitter {
 		try {
 			this.endingBlock = await this.web3.eth.getBlockNumber()
 			if (this.startingBlock < this.endingBlock) {			
-				console.log(`Processing blocks ${this.startingBlock}-${this.endingBlock}`)
+				log.debug(`Processing blocks ${this.startingBlock}-${this.endingBlock}`)
 				const transfers = await this.getTransfers(this.startingBlock, this.endingBlock)
 				this.notifyTransfers(transfers)
 				this.startingBlock = this.endingBlock + 1
 			}
 			setTimeout(this.processNext.bind(this), PROCESS_NEXT_INTERVAL_MS)
 		} catch(err) {
-			console.log(err)
+			log.error(err)
 			setTimeout(this.processNext.bind(this), PROCESS_NEXT_ERROR_INTERVAL_MS)
 		}
 	}
